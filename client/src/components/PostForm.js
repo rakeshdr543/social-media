@@ -2,6 +2,7 @@ import { useMutation, gql } from "@apollo/client";
 import React from "react";
 import { useForm } from "../util/hooks";
 import { Button, Form } from "semantic-ui-react";
+import { FETCH_POSTS_QUERY } from "../util/graphql";
 
 const PostForm = () => {
   const { values, onChange, onSubmit } = useForm(createPostCallback, {
@@ -10,13 +11,25 @@ const PostForm = () => {
   const [createPost, { error }] = useMutation(CREATE_POST_MUTATION, {
     variables: values,
     update(proxy, result) {
-      // const data=proxy.readQuery({
-      //     quer
-      // })
-      console.log("result");
+      const data = proxy.readQuery({
+        query: FETCH_POSTS_QUERY,
+      });
+      data.getPosts = [result.data.createPost, ...data.getPosts];
+      proxy.writeQuery({ query: FETCH_POSTS_QUERY, data });
       values.body = "";
     },
   });
+  // const [createPost, { error }] = useMutation(CREATE_POST_MUTATION, {
+  //   variables: values,
+  //   update(proxy, result) {
+  //     const data = proxy.readQuery({
+  //       query: FETCH_POSTS_QUERY,
+  //     });
+  //     data.getPosts = [result.data.createPost, ...data.getPosts];
+  //     proxy.writeQuery({ query: FETCH_POSTS_QUERY, data });
+  //     values.body = "";
+  //   },
+  // });
   function createPostCallback() {
     createPost();
   }
@@ -38,6 +51,29 @@ const PostForm = () => {
   );
 };
 
+// const CREATE_POST_MUTATION = gql`
+//   mutation createPost($body: String!) {
+//     createPost(body: $body) {
+//       id
+//       body
+//       createdAt
+//       username
+//       likes {
+//         id
+//         username
+//         createdAt
+//       }
+//       likeCount
+//       comments {
+//         id
+//         body
+//         username
+//         createdAt
+//       }
+//     }
+//   }
+// `;
+
 const CREATE_POST_MUTATION = gql`
   mutation createPost($body: String!) {
     createPost(body: $body) {
@@ -57,6 +93,7 @@ const CREATE_POST_MUTATION = gql`
         username
         createdAt
       }
+      commentCount
     }
   }
 `;
